@@ -43,7 +43,7 @@ http.listen(port, function(){
 
 
 
-server.use(helloBot.verifyBotFramework({ appId: 'PIABot', appSecret: '54611752d7d0439fba045063618a105c' }));
+//server.use(helloBot.verifyBotFramework({ appId: 'PIABot', appSecret: '54611752d7d0439fba045063618a105c' }));
 server.post('/api/messages', helloBot.listen());
 
 server.listen(port, function () {
