@@ -10,7 +10,7 @@ var server = restify.createServer();
 var helloBot = new builder.BotConnectorBot();
 helloBot.add('/', new builder.CommandDialog()
     .matches('^set name', builder.DialogAction.beginDialog('/profile'))
-    .matches('^quit', builder.DialogAction.endDialog())
+    .matches('^done', builder.DialogAction.endDialog())
     .onDefault(function (session) {
         if (!session.userData.name) {
             session.beginDialog('/profile');
