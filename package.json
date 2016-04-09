@@ -1,0 +1,14 @@
+{
+  "name": "dorabot",
+  "version": "1.0.0",
+  "description": "Personal BOt assitant for Project Dora",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Beanco CEO",
+  "license": "ISC",
+  "dependencies": {
+    "botbuilder": "^0.8.0"
+  }
+}
