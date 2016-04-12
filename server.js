@@ -4,7 +4,7 @@ const restify = require('restify');
 const skype = require('skype-sdk');
 
 process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
-process.end.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
+process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
 
 const botService = new skype.BotService({
     messaging: {
