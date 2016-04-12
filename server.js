@@ -1,51 +1,28 @@
-var restify = require('restify');
-var builder = require('botbuilder');
 
-var server = restify.createServer();
+const fs = require('fs');
+const restify = require('restify');
+const skype = require('skype-sdk');
 
-//var app = helloBot.verifyBotFramework({ appId: 'PIABot', appSecret: '54611752d7d0439fba045063618a105c' });
-
-
-
-var helloBot = new builder.BotConnectorBot();
-helloBot.add('/', new builder.CommandDialog()
-    .matches('^set name', builder.DialogAction.beginDialog('/profile'))
-    .matches('^done', builder.DialogAction.endDialog())
-    .onDefault(function (session) {
-        if (!session.userData.name) {
-            session.beginDialog('/profile');
-        } else {
-            session.send('Hello %s!', session.userData.name);
-        }
-    }));
-helloBot.add('/profile',  [
-    function (session) {
-        if (session.userData.name) {
-            builder.Prompts.text(session, 'What would you like to change it to?');
-        } else {
-            builder.Prompts.text(session, 'Hi! What is your name?');
-        }
-    },
-    function (session, results) {
-        session.userData.name = results.response;
-        session.send('Hello %s!', session.userData.name);
-        session.endDialog();
+const botService = new skype.BotService({
+    messaging: {
+        botId: '28:340042c3-9165-4b28-b4f1-2a051c7cccc6',
+        serverUrl : "https://apis.skype.com ",
+        requestTimeout : 15000,
+        appId: '2f803c4a-fb46-44ef-b974-742752bf9f3f',
+        appSecret: 'vVi5ZGMUOn6NvJAGXr1DT9s'
     }
-]);
-
-//var http = require('http').Server(helloBot.verifyBotFramework({ appId: 'PIABot', appSecret: '54611752d7d0439fba045063618a105c' }));
-var port = process.env.PORT || 3000;
-/*
-http.listen(port, function(){
-    console.log('listening on ' + port);
 });
-*/
 
-
-
-//server.use(helloBot.verifyBotFramework({ appId: 'PIABot', appSecret: '54611752d7d0439fba045063618a105c' }));
-server.post('/api/messages', helloBot.listen());
-
-server.listen(port, function () {
-    console.log('%s listening to %s', 'PIABot', server.url + '/api/messages' ); 
+botService.on('contactAdded', (bot, data) => {
+    bot.reply(`Hello ${data.fromDisplayName}!`, true);
 });
+
+botService.on('personalMessage', (bot, data) => {
+    bot.reply(`Hey ${data.from}. Thank you for your message: "${data.content}".`, true);
+});
+
+const server = restify.createServer();
+server.post('/v1/chat', skype.messagingHandler(botService));
+const port = process.env.PORT || 8080;
+server.listen(port);
+console.log('Listening for incoming requests on port ' + port); 
