@@ -13,6 +13,8 @@
     "botconnector": "^0.9.6",
     "botkit": "0.0.15",
     "express": "^4.10.2",
+    "hashmap": "^2.0.5",
+    "line-by-line": "^0.1.4",
     "querystring": "^0.2.0",
     "restify": "^4.0.4",
     "skype-sdk": "file:skype-sdk.tar",
