@@ -56,11 +56,66 @@ dialog.on('Greeting',
 );
 
 dialog.on('LocateChild', 
-	function(session){
-		session.send("I am searching for your child");
-		//session.endDialog();
+	function(session, indents){
+		
+		
+		console.log("\nUser sent: " + session.message.text);
+
+		console.log("\n" + JSON.stringify(indents) );
+
+		if (!checkEmpty(indents.entities) ){
+			session.send("I am searching for your child");
+		}
+		else{
+			session.send("I did not understand you.");
+			sendJobs(session);
+		}
 	}
 );
+
+dialog.on('PictureChild',
+	function(session, indents){
+
+		console.log("\nUser sent: " + session.message.text);
+		console.log("\n" + JSON.stringify(indents) );
+
+		if (!checkEmpty(indents.entities) ){
+			session.send("I am requesting the picture");
+		}
+		else{
+			session.send("I did not understand you.");
+			sendJobs(session);
+		}
+		
+	}
+)
+
+dialog.on('CalmChild',
+	function(session, indents){
+
+		console.log("\nUser sent: " + session.message.text);
+		console.log("\n" + JSON.stringify(indents) );
+
+		if (!checkEmpty(indents.entities) ){
+			session.send("I am comforting your child");
+		}
+		else{
+			session.send("I did not understand you.");
+			sendJobs(session);
+		}
+		
+	}
+)
+
+dialog.on('Asking',
+	function(session, indents){
+
+		console.log("\nUser sent: " + session.message.text);
+		console.log("\n" + JSON.stringify(indents) );
+		sendJobs(session);
+		
+	}
+)
 
 bot.add('/profile', 
 	[
@@ -71,11 +126,24 @@ bot.add('/profile',
 	        session.userData.name = results.response;
 	        //session.send('Hi %s! Nice to meet you. I am BackpackBot.', session.userData.name);
 	        session.endDialog('Nice to meet you. I am BackpackBot.');
+	        sendJobs(session);
  
 	    }
 	]
 
 );
+
+function checkEmpty(obj) {
+  return !Object.keys(obj).length;
+};
+
+function sendJobs(session){
+	session.send("So far, I can do these things: ");
+	session.send("1. Locate/find your child");
+	session.send("2. Show what your child sees");
+	session.send("3. Calm your child in case of lost");
+	session.send("4. Instruct your child");
+}
 
 
 const server = restify.createServer();
