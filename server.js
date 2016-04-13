@@ -1,4 +1,4 @@
-
+const Firebase = require("firebase");
 const fs = require('fs');
 const LineByLineReader = require('line-by-line');
 const restify = require('restify');
@@ -7,20 +7,21 @@ const HashMap = require('hashmap');
 const builder = require('botbuilder');
 
 
-var lr = new LineByLineReader('userlist.txt');
-var map = new HashMap();
+//var lr = new LineByLineReader('userlist.txt');
+//var map = new HashMap();
+var ref = new Firebase("https://project-backpack.firebaseio.com");
 
 
 process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
 process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
-
-
+/*
 lr.on('line', function (line) {
 	// 'line' contains the current line without the trailing newline character.
 	//console.log(line);
 	var arr = line.split(",");
 	map.set(arr[0], arr[1]);
 });
+*/
 
 const botService = new skype.BotService({
     messaging: {
