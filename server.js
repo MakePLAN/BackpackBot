@@ -58,18 +58,27 @@ dialog.on('Greeting',
 dialog.on('LocateChild', 
 	function(session, indents){
 		
-		
 		console.log("\nUser sent: " + session.message.text);
-
+		//console.log("UserID: " + JSON.stringify(session.message.from) );
+		console.log("UserID: " + session.message.from.address);
 		//console.log("\n" + JSON.stringify(indents) );
 
-		if (!checkEmpty(indents.entities) ){
+		if (session.message.from.address == "8:sagar7p"){
+			session.send("Sorry, I was instructed not to talk to any Indian.\n Heehaw");
+
+		}
+		else if (session.message.from.address == "8:live:zwrng"){
+			session.send("Sorry, I was instructed not to talk to any Zirans.\n Heehaw");
+		}
+		else if (!checkEmpty(indents.entities) ){
 			session.send("I am searching for your child");
 		}
 		else{
 			session.send("I did not understand you.");
 			sendJobs(session);
 		}
+
+
 	}
 );
 
@@ -77,7 +86,17 @@ dialog.on('PictureChild',
 	function(session, indents){
 
 		console.log("\nUser sent: " + session.message.text);
-		session.send("I am requesting the picture");
+		console.log("UserID: " + session.message.from.address);
+		if (session.message.from.address == "8:sagar7p"){
+			session.send("Sorry, I was instructed not to talk to any Indian.");
+		}
+		else if (session.message.from.address == "8:live:zwrng"){
+			session.send("Sorry, I was instructed not to talk to any Zirans.");
+		}
+		else{
+			session.send("I am requesting the picture");
+		}
+		
 		//console.log("\n" + JSON.stringify(indents) );
 		/*
 		if (!checkEmpty(indents.entities) ){
@@ -95,8 +114,18 @@ dialog.on('CalmChild',
 	function(session, indents){
 
 		console.log("\nUser sent: " + session.message.text);
+		console.log("UserID: " + session.message.from.address);
 		//console.log("\n" + JSON.stringify(indents) );
-		session.send("I am comforting your child");
+		if (session.message.from.address == "8:sagar7p"){
+			session.send("Sorry, I was instructed not to talk to any Indian.");
+		}
+		else if (session.message.from.address == "8:live:zwrng"){
+			session.send("Sorry, I was instructed not to talk to any Zirans.");
+		}
+		else{
+			session.send("I am comforting your child");
+		}
+		
 		/*
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am comforting your child");
@@ -113,9 +142,10 @@ dialog.on('CommandChild',
 	function(session, indents){
 
 		console.log("\nUser sent: " + session.message.text);
-		console.log("\n" + JSON.stringify(indents) );
+		console.log("UserID: " + session.message.from.address);
+		//console.log("\n" + JSON.stringify(indents) );
 		
-		console.log("\n" + indents.entities);
+		//console.log("\n" + JSON.stringify(indents.entities) );
 		/*
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am comforting your child");
@@ -125,7 +155,15 @@ dialog.on('CommandChild',
 			sendJobs(session);
 		}
 		*/
-		session.send("I am instructing your child");
+		if (session.message.from.address == "8:sagar7p"){
+			session.send("Sorry, I was instructed not to talk to any Indian.");
+		}
+		else if (session.message.from.address == "8:live:zwrng"){
+			session.send("Sorry, I was instructed not to talk to any Zirans.");
+		}
+		else{
+			session.send("I am instructing your child");
+		}
 	}
 )
 
