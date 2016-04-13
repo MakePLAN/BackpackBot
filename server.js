@@ -17,7 +17,7 @@ process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
 
 lr.on('line', function (line) {
 	// 'line' contains the current line without the trailing newline character.
-	console.log(line);
+	//console.log(line);
 	var arr = line.split(",");
 	map.set(arr[0], arr[1]);
 });
@@ -32,54 +32,50 @@ const botService = new skype.BotService({
     }
 });
 
+var model = 'https://api.projectoxford.ai/luis/v1/application?id=8a5d0cec-688c-4255-bc81-115ce7afca9b&subscription-key=f6f9069274c843aba8f5368bab5a74a5';
+var dialog = new builder.LuisDialog(model);
+
+
 // Create bot and add dialogs
 var bot = new builder.SkypeBot(botService);
-bot.add('/', function (session) {
-    if (!session.userData.name) {
-        session.beginDialog('/profile');
-    } else {
-        session.send('Hi %s! What can I do for you?', session.userData.name);
+
+bot.add('/', dialog);
+
+dialog.on('Greeting', 
+    function(session, intents){
+        //console.log(JSON.stringify(intents));
+        if (!session.userData.name ){
+        	session.beginDialog('/profile');
+        }
+        else{
+        	session.endDialog('Hi %s! What can I do for you?', session.userData.name);
+        	//session.endDialog();
+        }
+        
     }
-});
-bot.add('/profile', [
-    function (session) {
-        builder.Prompts.text(session, 'Hi! What is your name?');
-    },
-    function (session, results) {
-        session.userData.name = results.response;
-        //session.send('Hi %s! Nice to meet you. I am BackpackBot.', session.userData.name);
-        session.endDialog();
-    }
-]);
-//botService.
-/*
-botService.on('contactAdded', (bot, data) => {
-	//console.log(JSON.stringify(data) );
-	var str = data.from;
-	var arr = str.split(":");
-	var username = arr[1];
-	console.log(username + " added to the map!");
+);
 
-	str = data.fromDisplayName;
-	arr = str.split(" ");
-	var name = arr[0];
-
-	//map.set(username, name);
-});
-
-botService.on('personalMessage', (bot, data) => {
-	var str = data.from;
-	var arr = str.split(":");
-	var name = arr[1];
-	if (map.has(name) ){
-		bot.reply('Hi, ' + map.get(name) + '. What can I do for you?', true);
+dialog.on('LocateChild', 
+	function(session){
+		session.send("I am searching for your child");
+		//session.endDialog();
 	}
-	else{
-		//bot.reply('Who are you? Fuck off', true);
-	}
+);
 
-});
-*/
+bot.add('/profile', 
+	[
+	    function (session) {
+	        builder.Prompts.text(session, 'Hi! What is your name?');
+	    },
+	    function (session, results) {
+	        session.userData.name = results.response;
+	        //session.send('Hi %s! Nice to meet you. I am BackpackBot.', session.userData.name);
+	        session.endDialog('Nice to meet you. I am BackpackBot.');
+ 
+	    }
+	]
+
+);
 
 
 const server = restify.createServer();
