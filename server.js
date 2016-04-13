@@ -61,7 +61,7 @@ dialog.on('LocateChild',
 		
 		console.log("\nUser sent: " + session.message.text);
 
-		console.log("\n" + JSON.stringify(indents) );
+		//console.log("\n" + JSON.stringify(indents) );
 
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am searching for your child");
@@ -77,8 +77,9 @@ dialog.on('PictureChild',
 	function(session, indents){
 
 		console.log("\nUser sent: " + session.message.text);
-		console.log("\n" + JSON.stringify(indents) );
-
+		session.send("I am requesting the picture");
+		//console.log("\n" + JSON.stringify(indents) );
+		/*
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am requesting the picture");
 		}
@@ -86,7 +87,7 @@ dialog.on('PictureChild',
 			session.send("I did not understand you.");
 			sendJobs(session);
 		}
-		
+		*/
 	}
 )
 
@@ -94,8 +95,9 @@ dialog.on('CalmChild',
 	function(session, indents){
 
 		console.log("\nUser sent: " + session.message.text);
-		console.log("\n" + JSON.stringify(indents) );
-
+		//console.log("\n" + JSON.stringify(indents) );
+		session.send("I am comforting your child");
+		/*
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am comforting your child");
 		}
@@ -103,7 +105,27 @@ dialog.on('CalmChild',
 			session.send("I did not understand you.");
 			sendJobs(session);
 		}
+		*/
+	}
+)
+
+dialog.on('CommandChild',
+	function(session, indents){
+
+		console.log("\nUser sent: " + session.message.text);
+		console.log("\n" + JSON.stringify(indents) );
 		
+		console.log("\n" + indents.entities);
+		/*
+		if (!checkEmpty(indents.entities) ){
+			session.send("I am comforting your child");
+		}
+		else{
+			session.send("I did not understand you.");
+			sendJobs(session);
+		}
+		*/
+		session.send("I am instructing your child");
 	}
 )
 
@@ -111,7 +133,7 @@ dialog.on('Asking',
 	function(session, indents){
 
 		console.log("\nUser sent: " + session.message.text);
-		console.log("\n" + JSON.stringify(indents) );
+		//console.log("\n" + JSON.stringify(indents) );
 		sendJobs(session);
 		
 	}
@@ -138,11 +160,10 @@ function checkEmpty(obj) {
 };
 
 function sendJobs(session){
-	session.send("So far, I can do these things: ");
-	session.send("1. Locate/find your child");
-	session.send("2. Show what your child sees");
-	session.send("3. Calm your child in case of lost");
-	session.send("4. Instruct your child");
+	
+	session.send("So far, I can do these things: \n1. Locate/find your child \n2. Show what your child sees \n3. Calm your child in case of lost\n4. Instruct your child");
+	
+	//session.send("\n My jobs");
 }
 
 
