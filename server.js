@@ -59,19 +59,12 @@ dialog.on('Greeting',
 dialog.on('LocateChild', 
 	function(session, indents){
 		
-		console.log("\nUser sent: " + session.message.text);
+		//console.log("\nUser sent: " + session.message.text);
 		//console.log("UserID: " + JSON.stringify(session.message.from) );
-		console.log("UserID: " + session.message.from.address);
+		//console.log("UserID: " + session.message.from.address);
 		//console.log("\n" + JSON.stringify(indents) );
 
-		if (session.message.from.address == "8:sagar7p"){
-			session.send("Sorry, I was instructed not to talk to any Indian.\n Heehaw");
-
-		}
-		else if (session.message.from.address == "8:live:zwrng"){
-			session.send("Sorry, I was instructed not to talk to any Zirans.\n Heehaw");
-		}
-		else if (!checkEmpty(indents.entities) ){
+		if (!checkEmpty(indents.entities) ){
 			session.send("I am searching for your child");
 		}
 		else{
@@ -86,17 +79,11 @@ dialog.on('LocateChild',
 dialog.on('PictureChild',
 	function(session, indents){
 
-		console.log("\nUser sent: " + session.message.text);
-		console.log("UserID: " + session.message.from.address);
-		if (session.message.from.address == "8:sagar7p"){
-			session.send("Sorry, I was instructed not to talk to any Indian.");
-		}
-		else if (session.message.from.address == "8:live:zwrng"){
-			session.send("Sorry, I was instructed not to talk to any Zirans.");
-		}
-		else{
-			session.send("I am requesting the picture");
-		}
+		//console.log("\nUser sent: " + session.message.text);
+		//console.log("UserID: " + session.message.from.address);
+		
+		session.send("I am requesting the picture");
+		
 		
 		//console.log("\n" + JSON.stringify(indents) );
 		/*
@@ -114,18 +101,12 @@ dialog.on('PictureChild',
 dialog.on('CalmChild',
 	function(session, indents){
 
-		console.log("\nUser sent: " + session.message.text);
-		console.log("UserID: " + session.message.from.address);
+		//console.log("\nUser sent: " + session.message.text);
+		//console.log("UserID: " + session.message.from.address);
 		//console.log("\n" + JSON.stringify(indents) );
-		if (session.message.from.address == "8:sagar7p"){
-			session.send("Sorry, I was instructed not to talk to any Indian.");
-		}
-		else if (session.message.from.address == "8:live:zwrng"){
-			session.send("Sorry, I was instructed not to talk to any Zirans.");
-		}
-		else{
-			session.send("I am comforting your child");
-		}
+		
+		session.send("I am comforting your child");
+		
 		
 		/*
 		if (!checkEmpty(indents.entities) ){
@@ -142,8 +123,8 @@ dialog.on('CalmChild',
 dialog.on('CommandChild',
 	function(session, indents){
 
-		console.log("\nUser sent: " + session.message.text);
-		console.log("UserID: " + session.message.from.address);
+		//console.log("\nUser sent: " + session.message.text);
+		//console.log("UserID: " + session.message.from.address);
 		//console.log("\n" + JSON.stringify(indents) );
 		
 		//console.log("\n" + JSON.stringify(indents.entities) );
@@ -156,22 +137,16 @@ dialog.on('CommandChild',
 			sendJobs(session);
 		}
 		*/
-		if (session.message.from.address == "8:sagar7p"){
-			session.send("Sorry, I was instructed not to talk to any Indian.");
-		}
-		else if (session.message.from.address == "8:live:zwrng"){
-			session.send("Sorry, I was instructed not to talk to any Zirans.");
-		}
-		else{
-			session.send("I am instructing your child");
-		}
+		
+		session.send("I am instructing your child");
+		
 	}
 )
 
 dialog.on('Asking',
 	function(session, indents){
 
-		console.log("\nUser sent: " + session.message.text);
+		//console.log("\nUser sent: " + session.message.text);
 		//console.log("\n" + JSON.stringify(indents) );
 		sendJobs(session);
 		
@@ -194,6 +169,17 @@ bot.add('/profile',
 
 );
 
+/*
+bot.add('/requestMap', 
+	[
+		function (session){
+			console.log('message type: ' + session.message.type);
+			//builder.Prompts
+		}
+	]
+);*/
+
+
 function checkEmpty(obj) {
   return !Object.keys(obj).length;
 };
@@ -210,4 +196,4 @@ const server = restify.createServer();
 server.post('/v1/chat', skype.messagingHandler(botService));
 const port = process.env.PORT || 8080;
 server.listen(port);
-console.log('Listening for incoming requests on port ' + port); 
+//console.log('Listening for incoming requests on port ' + port); 
