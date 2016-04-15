@@ -192,7 +192,7 @@ dialog.on('Asking',
 	}
 )
 
-dialog.on('NavigationChild', 
+dialog.on('NavigateChild', 
 	function(session, indents){
 		session.send("Finding a way to the child.");
 	}
