@@ -10,7 +10,8 @@ const builder = require('botbuilder');
 //var lr = new LineByLineReader('userlist.txt');
 //var map = new HashMap();
 var ref = new Firebase("https://project-backpack.firebaseio.com");
-
+var locReady = false;
+var picReady = false;
 
 process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
 process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
@@ -22,6 +23,22 @@ lr.on('line', function (line) {
 	map.set(arr[0], arr[1]);
 });
 */
+
+ref.on("child_changed", function(snapshot) {
+  var key = snapshot.key();
+  var value = snapshot.val();
+
+  //console.log("The updated: " + snapshot.key() + " , " + snapshot.val() );
+  if (key == "locReady" && value == 1){
+  	//console.log("LocReady became 1");
+  	locReady = true;
+  }
+  else if (key == "picReady" && value == 1){
+  	//console.log("picReady became 1");
+  	picReady = true;
+  }
+
+});
 
 const botService = new skype.BotService({
     messaging: {
@@ -35,7 +52,6 @@ const botService = new skype.BotService({
 
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=8a5d0cec-688c-4255-bc81-115ce7afca9b&subscription-key=f6f9069274c843aba8f5368bab5a74a5';
 var dialog = new builder.LuisDialog(model);
-
 
 // Create bot and add dialogs
 var bot = new builder.SkypeBot(botService);
@@ -66,12 +82,19 @@ dialog.on('LocateChild',
 
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am searching for your child");
+			ref.update({
+		    	"getLocation": 1
+			});
 		}
 		else{
 			session.send("I did not understand you.");
 			sendJobs(session);
 		}
+		//while(!locReady){
 
+		//}
+		locReady = false;
+		session.send("I found your child.");
 
 	}
 );
@@ -84,6 +107,16 @@ dialog.on('PictureChild',
 		
 		session.send("I am requesting the picture");
 		
+		ref.update({
+		    "getPicture": 1
+
+		});
+
+		//while(!picReady){
+
+		//}
+		picReady = false;
+		session.send("I got the picture.");
 		
 		//console.log("\n" + JSON.stringify(indents) );
 		/*
@@ -107,7 +140,10 @@ dialog.on('CalmChild',
 		
 		session.send("I am comforting your child");
 		
-		
+		ref.update({
+		    "comfortChild": 1
+
+		});
 		/*
 		if (!checkEmpty(indents.entities) ){
 			session.send("I am comforting your child");
@@ -139,7 +175,10 @@ dialog.on('CommandChild',
 		*/
 		
 		session.send("I am instructing your child");
-		
+		ref.update({
+		    "commandChild": 1
+
+		});
 	}
 )
 
@@ -197,9 +236,8 @@ function sendJobs(session){
 	//session.send("\n My jobs");
 }
 
-
 const server = restify.createServer();
-server.post('/v1/chat', skype.messagingHandler(botService));
+server.post('/v1/chat',skype.messagingHandler(botService));
 const port = process.env.PORT || 8080;
 server.listen(port);
 console.log('Listening for incoming requests on port ' + port); 
