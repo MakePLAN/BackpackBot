@@ -153,6 +153,12 @@ dialog.on('Asking',
 	}
 )
 
+dialog.on('NavigationChild', 
+	function(session, indents){
+		session.send("Finding a way to the child.");
+	}
+)
+
 bot.add('/profile', 
 	[
 	    function (session) {
