@@ -5,40 +5,41 @@ const restify = require('restify');
 const skype = require('skype-sdk');
 const HashMap = require('hashmap');
 const builder = require('botbuilder');
+const GoogleMapsAPI = require('googlemaps');
+var imgur = require('imgur-node-api');
+const path = require('path');
+const connector = require('botconnector');
+const msRest = require('ms-rest');
 
 
-//var lr = new LineByLineReader('userlist.txt');
-//var map = new HashMap();
 var ref = new Firebase("https://project-backpack.firebaseio.com");
 var locReady = false;
 var picReady = false;
+var picLink = "";
 
 process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
 process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
+
+var publicConfig = {
+  key: 'AIzaSyDatgOjWYvmc0sUTxS1V1kuG0fzOUkAho4',
+  stagger_time:       1000, // for elevationPath
+  encode_polylines:   false,
+  secure:             true, // use https
+  proxy:              '' // optional, set a proxy for HTTP requests
+};
+
+var gmAPI = new GoogleMapsAPI(publicConfig);
+
+imgur.setClientID('31fdaa6d92294ea');
 /*
-lr.on('line', function (line) {
-	// 'line' contains the current line without the trailing newline character.
-	//console.log(line);
-	var arr = line.split(",");
-	map.set(arr[0], arr[1]);
+imgur.getCredits(function (err, res) {
+  console.log(res.data);
 });
 */
 
-ref.on("child_changed", function(snapshot) {
-  var key = snapshot.key();
-  var value = snapshot.val();
+var userID;
+var childName; 
 
-  //console.log("The updated: " + snapshot.key() + " , " + snapshot.val() );
-  if (key == "locReady" && value == 1){
-  	//console.log("LocReady became 1");
-  	locReady = true;
-  }
-  else if (key == "picReady" && value == 1){
-  	//console.log("picReady became 1");
-  	picReady = true;
-  }
-
-});
 
 const botService = new skype.BotService({
     messaging: {
@@ -61,11 +62,17 @@ bot.add('/', dialog);
 dialog.on('Greeting', 
     function(session, intents){
         //console.log(JSON.stringify(intents));
+        //console.log("UserID: " + session.message.from.address);
+
         if (!session.userData.name ){
         	session.beginDialog('/profile');
+        	userID = session.message.from;
+        	//session.userData.skypeid = session.message.from.address;
         }
         else{
+        	
         	session.endDialog('Hi %s! What can I do for you?', session.userData.name);
+
         	//session.endDialog();
         }
         
@@ -74,27 +81,20 @@ dialog.on('Greeting',
 
 dialog.on('LocateChild', 
 	function(session, indents){
-		
-		//console.log("\nUser sent: " + session.message.text);
-		//console.log("UserID: " + JSON.stringify(session.message.from) );
-		//console.log("UserID: " + session.message.from.address);
-		//console.log("\n" + JSON.stringify(indents) );
 
 		if (!checkEmpty(indents.entities) ){
-			session.send("I am searching for your child");
-			ref.update({
-		    	"getLocation": 1
-			});
+			//session.send("I am searching for your child");
+			
+			session.endDialog("I am searching for %s", childName);
+			session.beginDialog("/getLocation");
+			
 		}
 		else{
-			session.send("I did not understand you.");
+			session.endDialog("I did not understand you.");
 			sendJobs(session);
-		}
-		//while(!locReady){
 
-		//}
-		locReady = false;
-		session.send("I found your child.");
+		}
+		
 
 	}
 );
@@ -102,83 +102,27 @@ dialog.on('LocateChild',
 dialog.on('PictureChild',
 	function(session, indents){
 
-		//console.log("\nUser sent: " + session.message.text);
-		//console.log("UserID: " + session.message.from.address);
-		
-		session.send("I am requesting the picture");
-		
 		ref.update({
 		    "getPicture": 1
 
 		});
 
-		//while(!picReady){
-
-		//}
-		picReady = false;
-		session.send("I got the picture.");
-		
-		//console.log("\n" + JSON.stringify(indents) );
-		/*
-		if (!checkEmpty(indents.entities) ){
-			session.send("I am requesting the picture");
-		}
-		else{
-			session.send("I did not understand you.");
-			sendJobs(session);
-		}
-		*/
+		session.endDialog("I am requesting the picture");
+		//session.beginDialog('/getPicture');
+	
 	}
 )
 
 dialog.on('CalmChild',
 	function(session, indents){
-
-		//console.log("\nUser sent: " + session.message.text);
-		//console.log("UserID: " + session.message.from.address);
-		//console.log("\n" + JSON.stringify(indents) );
 		
-		session.send("I am comforting your child");
+		session.send("I am comforting %s", childName);
 		
 		ref.update({
 		    "comfortChild": 1
 
 		});
-		/*
-		if (!checkEmpty(indents.entities) ){
-			session.send("I am comforting your child");
-		}
-		else{
-			session.send("I did not understand you.");
-			sendJobs(session);
-		}
-		*/
-	}
-)
-
-dialog.on('CommandChild',
-	function(session, indents){
-
-		//console.log("\nUser sent: " + session.message.text);
-		//console.log("UserID: " + session.message.from.address);
-		//console.log("\n" + JSON.stringify(indents) );
 		
-		//console.log("\n" + JSON.stringify(indents.entities) );
-		/*
-		if (!checkEmpty(indents.entities) ){
-			session.send("I am comforting your child");
-		}
-		else{
-			session.send("I did not understand you.");
-			sendJobs(session);
-		}
-		*/
-		
-		session.send("I am instructing your child");
-		ref.update({
-		    "commandChild": 1
-
-		});
 	}
 )
 
@@ -192,38 +136,278 @@ dialog.on('Asking',
 	}
 )
 
-dialog.on('NavigateChild', 
-	function(session, indents){
-		session.send("Finding a way to the child.");
+bot.add('/getPicture', 
+	function (session){
+		ref.once("value", function(data){
+			session.send("I got the picture");
+			var picLink = data.val().picLink;
+			//session.send(picLink);
+			session.endDialog(picLink);
+		});
 	}
-)
+);
+
+bot.add('/getLocation', 
+	function (session){
+		ref.once("value", function(data) {
+
+			var pCord = data.val().pCord;
+			var cCord = data.val().cCord;
+			
+			var params = getMap(pCord , cCord);
+			var params1 = getDist(pCord , cCord);
+
+			imgur.upload( gmAPI.staticMap(params) , function (err,res) {
+			  //console.log(res.data.link);
+				session.send("I found your child");
+				session.send(res.data.link);
+				session.send("Green: Your location\nRed: %s's location", childName);
+
+				//console.log(err);
+				
+				gmAPI.distance(params1, function(err1, result){
+				
+					var dist = (result.rows[0]).elements[0].distance.text;
+					var time = (result.rows[0]).elements[0].duration.text;
+					
+					session.send("You are about " + dist + ", which is about " + time   
+					+ ", away from %s.", childName);
+					session.endDialog();
+					//bot.beginDialog(address, '/navigation');
+					session.beginDialog('/navigation');
+					
+					//console.log(response);
+				});
+
+			});
+		});
+	}
+);
 
 bot.add('/profile', 
 	[
 	    function (session) {
-	        builder.Prompts.text(session, 'Hi! What is your name?');
+	        builder.Prompts.text(session, 'Hi! What should I call you?');
 	    },
 	    function (session, results) {
 	        session.userData.name = results.response;
+
+	        builder.Prompts.text(session, 'What should I call your child?');
 	        //session.send('Hi %s! Nice to meet you. I am BackpackBot.', session.userData.name);
-	        session.endDialog('Nice to meet you. I am BackpackBot.');
+	        
+	    },
+	    function (session, results){
+	    	//childName = results.response;
+	    	childName = results.response;
+	    	session.endDialog('Nice to meet you. I am BackpackBot.');
 	        sendJobs(session);
- 
 	    }
 	]
 
 );
 
-/*
-bot.add('/requestMap', 
+bot.add('/navigation', 
 	[
-		function (session){
-			console.log('message type: ' + session.message.type);
-			//builder.Prompts
-		}
-	]
-);*/
+		function (session) {
+	        builder.Prompts.confirm(session, "Do you want to start your navigation?");
+	    },
+	    function (session, results) {
+	        //console.log(results.response);
+	        if (results.response){//start the navigation 
+	        	session.send("Starting your navigation");
 
+	        	ref.once("value", function(data) {
+	        		var pCord = data.val().pCord;
+					var cCord = data.val().cCord;
+
+	        		var params = getDire(pCord , cCord);
+	        		gmAPI.directions(params, function(err, result){
+
+						var moves = result.routes[0].legs[0].steps; 
+		
+						iterateSteps(0, moves.length, moves, session);
+
+					});
+
+	        	});
+
+
+	        	
+	        }
+	        else{
+	        	session.endDialog("Don't forget about %s before you go!", childName);
+	        }
+
+	       
+ 
+	    }
+	]
+);
+
+//Firebase
+ref.on("child_changed", function(data){
+	if ( data.key() == "getPicture" && data.val() == 0 ){
+		
+		var address = {
+			to: userID,
+
+		};
+		bot.beginDialog(address, '/getPicture');
+	}
+});
+
+function iterateSteps(current, end, moves, session){
+	if (current == end){
+		session.endDialog("Good luck finding %s!", childName);
+		return;
+	}
+
+	var step = moves[current];
+    var sLoc = step.start_location.lat + ',' + step.start_location.lng; 
+    var eLoc = step.end_location.lat + ',' + step.end_location.lng;
+    var params = getMap(sLoc, eLoc);
+  
+    imgur.upload( gmAPI.staticMap(params) , function (err,res) {
+	  	
+	  	var str = step.html_instructions;
+    	var result = str.replace(/<\/?[^>]+(>|$)/g, "");
+    	session.send(res.data.link);
+		session.send(current +  ". Green: Start Point\nRed: End Point\n" + 
+			"Note:" + result + "\n" + 
+			"Distance: " + step.distance.value + " m"
+		);
+		
+		current = current + 1;
+		
+		//setTimeout(iterateSteps(current, end, moves, session), 2000);
+		iterateSteps(current, end, moves, session);
+		
+		
+	});
+}
+
+function getDire(parent, child){
+	var params = {
+		origin: parent, 
+		destination: child, 
+		mode: 'walking',
+		language: 'en'
+	};
+	return params;
+}
+
+
+function getDist(parent, child){
+	var params = {
+		origins: parent,
+		destinations: child, 
+		mode: 'walking',
+		language: 'en'
+	};
+
+	return params;
+}
+
+function getDistance(start, end){
+
+	var params = getDist(start,end);
+	var dist;
+	var time;
+
+	gmAPI.distance(params, function(err, result){
+								
+								
+		//console.log(  (result.rows[0]).elements[0].distance.text  );
+		dist = (result.rows[0]).elements[0].distance.text;
+		time = (result.rows[0]).elements[0].duration.text;
+		return dist;
+		
+	});
+
+	
+}
+
+
+
+function getMap( parent, child){
+	var array = parent.split(",");
+	var lat1 = parseFloat(array[0]);
+	var lon1 = parseFloat(array[1]);
+
+	array = child.split(",");
+	var lat2 = parseFloat(array[0]);
+	var lon2 = parseFloat(array[1]);
+
+	var d = parseInt( distance(lat1, lon1, lat2, lon2) * 1000 );
+
+	var zoomLevel;
+	if (d > 200){
+		zoomLevel = 15;
+	}
+	else{
+		zoomLevel = 21;
+	}
+	//console.log(d * 1000);
+	
+
+	var params = {
+			  center: parent,
+			  zoom: zoomLevel,
+			  size: '500x400',
+			  format: 'jpg',
+			  maptype: 'roadmap',
+			  markers: [
+			    {
+			      //location: '3025 Royal St Los Angeles, CA',
+			      location: parent,
+			      label   : 'A',
+			      color   : 'green',
+			      shadow  : true
+			    }, 
+			    {
+			    	location: child,
+				    label   : 'B',
+				    color   : 'red',
+				    shadow  : true
+			    }
+			  ],
+			  style: [
+			    {
+			      feature: 'road',
+			      element: 'all',
+			      rules: {
+			        hue: '0x00ff00'
+			      }
+			    }
+			  ]
+			  
+			  ,path: [
+			    {
+			      color: 'blue',
+			      weight: '5',
+			      points: [
+			        parent,
+			        child
+			      ]
+			    }
+			  ]
+			
+	};
+	//console.log(gmAPI.staticMap(params) ); // return static map URL
+	return params;
+}
+
+function distance(lat1, lon1, lat2, lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = (lat2 - lat1) * Math.PI / 180;  // deg2rad below
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = 
+     0.5 - Math.cos(dLat)/2 + 
+     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+     (1 - Math.cos(dLon))/2;
+
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
 
 function checkEmpty(obj) {
   return !Object.keys(obj).length;
@@ -231,12 +415,14 @@ function checkEmpty(obj) {
 
 function sendJobs(session){
 	
-	session.send("So far, I can do these things: \n1. Locate/find your child \n2. Show what your child sees \n3. Calm your child in case of lost\n4. Instruct your child");
+	session.send("So far, I can do these things: \n1. Locate/find %s \n2. Show you what %s sees \n3. Comfort %s in case of lost", childName, childName, childName);
 	
 	//session.send("\n My jobs");
 }
 
 const server = restify.createServer();
+server.use(restify.authorizationParser());
+server.use(restify.bodyParser());
 server.post('/v1/chat',skype.messagingHandler(botService));
 const port = process.env.PORT || 8080;
 server.listen(port);
