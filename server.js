@@ -16,6 +16,7 @@ var ref = new Firebase("https://project-backpack.firebaseio.com");
 var locReady = false;
 var picReady = false;
 var picLink = "";
+var needLocation = false;
 
 process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
 process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
@@ -169,13 +170,17 @@ dialog.on('Asking',
 
 dialog.on('NavigateChild', 
 	function(session){
-		if (session.message.text == "yes"){
-			session.endDialog();
-			session.beginDialog('/navigation');
+		if (needLocation){
+			if (session.message.text == "yes"){
+				session.endDialog();
+				session.beginDialog('/navigation');
+			}
+			else{
+				session.endDialog("Dont forget about %s before you leave!", childName);
+			}
+			needLocation = false;
 		}
-		else{
-			session.endDialog("Dont forget about %s before you leave!", childName);
-		}
+		
 	}
 );
 
@@ -219,6 +224,7 @@ bot.add('/getLocation',
 					session.send("You are about " + dist + ", which is about " + time   
 					+ ", away from %s.", childName);
 					//session.replaceDialog('/navigation');
+					needLocation = true;
 					session.endDialog("Do you want to start your navigation?");
 					//session.beginDialog('/navigation');
 					
