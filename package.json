@@ -15,6 +15,7 @@
     "express": "^4.10.2",
     "firebase": "^2.4.2",
     "fs-writefile-promise": "^1.0.3",
+    "geolocate": "0.0.1",
     "googlemaps": "^1.4.0",
     "hashmap": "^2.0.5",
     "imgur-node-api": "^0.1.0",

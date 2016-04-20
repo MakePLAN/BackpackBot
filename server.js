@@ -57,6 +57,37 @@ var dialog = new builder.LuisDialog(model);
 // Create bot and add dialogs
 var bot = new builder.SkypeBot(botService);
 
+
+//get location from the user 
+botService.on('groupMessage', (bot, data) => {
+    
+    //bot.reply(data.content, true);
+    
+    var index = data.content.search("where1");
+
+    
+    //console.log( (data.content).charAt(index + 7)   );
+    var result = "";
+
+    for (var i = index + 7; i < data.content.length; i++){
+        if ( (data.content).charAt(i) == '&'  ){
+            break;
+        }
+        else{
+            result += (data.content).charAt(i);
+        }
+    }
+
+    
+    ref.update({
+		    "pCord": result
+
+	});
+	
+    //console.log(result);
+	
+});
+
 bot.add('/', dialog);
 
 dialog.on('Greeting', 
@@ -83,10 +114,10 @@ dialog.on('LocateChild',
 	function(session, indents){
 
 		if (!checkEmpty(indents.entities) ){
-			//session.send("I am searching for your child");
 			
-			session.endDialog("I am searching for %s", childName);
-			session.beginDialog("/getLocation");
+			
+			session.endDialog("Before I search for %s, Can you share your location with Map?", childName);
+			//session.beginDialog("/getLocation");
 			
 		}
 		else{
@@ -136,6 +167,18 @@ dialog.on('Asking',
 	}
 )
 
+dialog.on('NavigateChild', 
+	function(session){
+		if (session.message.text == "yes"){
+			session.endDialog();
+			session.beginDialog('/navigation');
+		}
+		else{
+			session.endDialog("Dont forget about %s before you leave!", childName);
+		}
+	}
+);
+
 bot.add('/getPicture', 
 	function (session){
 		ref.once("value", function(data){
@@ -147,7 +190,10 @@ bot.add('/getPicture',
 	}
 );
 
+//bot.add('/')
+
 bot.add('/getLocation', 
+	
 	function (session){
 		ref.once("value", function(data) {
 
@@ -159,7 +205,7 @@ bot.add('/getLocation',
 
 			imgur.upload( gmAPI.staticMap(params) , function (err,res) {
 			  //console.log(res.data.link);
-				session.send("I found your child");
+				session.send("I found %s", childName);
 				session.send(res.data.link);
 				session.send("Green: Your location\nRed: %s's location", childName);
 
@@ -172,15 +218,17 @@ bot.add('/getLocation',
 					
 					session.send("You are about " + dist + ", which is about " + time   
 					+ ", away from %s.", childName);
-					session.endDialog();
-					//bot.beginDialog(address, '/navigation');
-					session.beginDialog('/navigation');
+					//session.replaceDialog('/navigation');
+					session.endDialog("Do you want to start your navigation?");
+					//session.beginDialog('/navigation');
 					
-					//console.log(response);
+					
 				});
 
 			});
 		});
+
+
 	}
 );
 
@@ -207,13 +255,10 @@ bot.add('/profile',
 );
 
 bot.add('/navigation', 
-	[
-		function (session) {
-	        builder.Prompts.confirm(session, "Do you want to start your navigation?");
-	    },
-	    function (session, results) {
+
+	    function (session) {
 	        //console.log(results.response);
-	        if (results.response){//start the navigation 
+	        
 	        	session.send("Starting your navigation");
 
 	        	ref.once("value", function(data) {
@@ -232,27 +277,29 @@ bot.add('/navigation',
 	        	});
 
 
-	        	
-	        }
-	        else{
-	        	session.endDialog("Don't forget about %s before you go!", childName);
-	        }
-
+	        
 	       
  
 	    }
-	]
+	
 );
 
 //Firebase
 ref.on("child_changed", function(data){
-	if ( data.key() == "getPicture" && data.val() == 0 ){
+	if ( data.key() == "picLink"){
 		
 		var address = {
 			to: userID,
 
 		};
 		bot.beginDialog(address, '/getPicture');
+	}
+	else if (data.key() == "pCord"){
+		var address = {
+			to: userID,
+
+		};
+		bot.beginDialog(address, '/getLocation');
 	}
 });
 
@@ -345,15 +392,15 @@ function getMap( parent, child){
 		zoomLevel = 15;
 	}
 	else{
-		zoomLevel = 21;
+		zoomLevel = 19;
 	}
 	//console.log(d * 1000);
 	
 
 	var params = {
-			  center: parent,
-			  zoom: zoomLevel,
-			  size: '500x400',
+			  //center: parent,
+			  //zoom: zoomLevel,
+			  size: '600x500',
 			  format: 'jpg',
 			  maptype: 'roadmap',
 			  markers: [

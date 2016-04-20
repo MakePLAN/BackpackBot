@@ -1,67 +1,51 @@
-var restify = require('restify');
-var msRest = require('ms-rest');
-var connector = require('botconnector');
+const restify = require('restify');
+const skype = require('skype-sdk');
+const builder = require('botbuilder');
 
-// Initialize server
-var server = restify.createServer();
-server.use(restify.authorizationParser());
-server.use(restify.bodyParser());
 
-// Initialize credentials for connecting to Bot Connector Service
-var appId = process.env.appId || 'PIABot';
-var appSecret = process.env.appSecret || '54611752d7d0439fba045063618a105c';
-var credentials = new msRest.BasicAuthenticationCredentials(appId, appSecret);
+process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
+process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
 
-// Handle incoming message
-server.post('/v1/messages', verifyBotFramework(credentials), function (req, res) {
-    var msg = req.body;
-    if (/^delay/i.test(msg.text)) {
-        // Delay sending the reply for 5 seconds
-        setTimeout(function () {
-            var reply = { 
-                replyToMessageId: msg.id,
-                to: msg.from,
-                from: msg.to,
-                text: 'I heard "' + msg.text.substring(6) + '"'
-            };
-            sendMessage(reply);
-        }, 5000);
-        res.send({ text: 'ok... sending reply in 5 seconds.' })
-    } else {
-        res.send({ text: 'I heard "' + msg.text + '". Say "delay {msg}" to send with a 5 second delay.' })
+// Initialize the BotService
+const botService = new skype.BotService({
+    messaging: {
+        botId: '28:340042c3-9165-4b28-b4f1-2a051c7cccc6',
+        serverUrl : "https://apis.skype.com ",
+        requestTimeout : 15000,
+        appId: process.env.APP_ID,
+        appSecret: process.env.APP_SECRET
     }
 });
 
-// Start server
-server.listen(process.env.PORT || 8080, function () {
-    console.log('%s listening to %s', server.name, server.url); 
+// Create bot and add dialogs
+
+botService.on('groupMessage', (bot, data) => {
+    //bot.reply(data.content, true);
+    
+    var index = data.content.search("where1");
+
+    
+    //console.log( (data.content).charAt(index + 7)   );
+    var result = "";
+
+    for (var i = index + 7; i < data.content.length; i++){
+        if ( (data.content).charAt(i) == '&'  ){
+            break;
+        }
+        else{
+            result += (data.content).charAt(i);
+        }
+    }
+
+    //console.log(result);
+
 });
 
-// Middleware to verfiy that requests are only coming from the Bot Connector Service
-function verifyBotFramework(credentials) {
-    return function (req, res, next) {
-        if (req.authorization && 
-            req.authorization.basic && 
-            req.authorization.basic.username == credentials.userName &&
-            req.authorization.basic.password == credentials.password) 
-        {
-            next();        
-        } else {
-            res.send(403);
-        }
-    };
-}
 
-// Helper function to send a Bot originated message to the user. 
-function sendMessage(msg, cb) {
-    var client = new connector(credentials);
-    var options = { customHeaders: {'Ocp-Apim-Subscription-Key': credentials.password}};
-    client.messages.sendMessage(msg, options, function (err, result, request, response) {
-        if (!err && response && response.statusCode >= 400) {
-            err = new Error('Message rejected with "' + response.statusMessage + '"');
-        }
-        if (cb) {
-            cb(err);
-        }
-    });          
-}
+
+// Setup Restify Server
+const server = restify.createServer();
+server.post('/v1/chat', skype.messagingHandler(botService));
+server.listen(process.env.PORT || 8080, function () {
+   console.log('%s listening to %s', server.name, server.url); 
+});
