@@ -7,14 +7,14 @@ const HashMap = require('hashmap');
 const builder = require('botbuilder');
 const GoogleMapsAPI = require('googlemaps');
 var imgur = require('imgur-node-api');
+var imgur1 = require('imgur');
 const path = require('path');
 const connector = require('botconnector');
 const msRest = require('ms-rest');
 
 
 var ref = new Firebase("https://project-backpack.firebaseio.com");
-var locReady = false;
-var picReady = false;
+var startNavi = false;
 var picLink = "";
 var needLocation = false;
 
@@ -32,6 +32,7 @@ var publicConfig = {
 var gmAPI = new GoogleMapsAPI(publicConfig);
 
 imgur.setClientID('31fdaa6d92294ea');
+imgur1.setClientId('31fdaa6d92294ea');
 /*
 imgur.getCredits(function (err, res) {
   console.log(res.data);
@@ -40,6 +41,8 @@ imgur.getCredits(function (err, res) {
 
 var userID;
 var childName; 
+var currNum = 0; 
+var directions = "";
 
 
 const botService = new skype.BotService({
@@ -172,14 +175,49 @@ dialog.on('NavigateChild',
 	function(session){
 		if (needLocation){
 			if (session.message.text == "yes"){
-				session.endDialog();
-				session.beginDialog('/navigation');
+				//session.endDialog();
+				//session.beginDialog('/navigation');
+				session.replaceDialog('/navigation');
 			}
-			else{
+			else if (session.message.text == "no"){
 				session.endDialog("Dont forget about %s before you leave!", childName);
 			}
 			needLocation = false;
 		}
+		else{
+			session.endDialog("I do not understand you.");
+			sendJobs(session);
+		}
+		
+	}
+);
+
+dialog.on('NextNavigation', 
+	function(session){
+		//session.endDialog();
+		//session.beginDialog('/nextStep');
+		if (startNavi){
+			session.replaceDialog('/nextStep');
+		}
+		else{
+			session.endDialog("Your navigation is not started");
+		}
+		
+	}
+);
+
+dialog.on('DoneNavigation', 
+	function(session){
+		if (startNavi){
+			currNum = 0; 
+			directions = "";
+			startNavi = false;
+			session.endDialog("Ending the child navigation.");
+		}
+		else{
+			session.endDialog("Your navigation is not started");
+		}
+		
 		
 	}
 );
@@ -200,6 +238,7 @@ bot.add('/getPicture',
 bot.add('/getLocation', 
 	
 	function (session){
+		
 		ref.once("value", function(data) {
 
 			var pCord = data.val().pCord;
@@ -207,9 +246,44 @@ bot.add('/getLocation',
 			
 			var params = getMap(pCord , cCord);
 			var params1 = getDist(pCord , cCord);
+			needLocation = true;
+			
+			imgur1.uploadFile(gmAPI.staticMap(params))
+			    .then(function (json) {
+			        //console.log(json.data.link);
 
+			        session.send("I found %s", childName);
+					session.send(json.data.link);
+					session.send("Green: Your location\nRed: %s's location", childName);
+
+					//console.log(err);
+					
+					gmAPI.distance(params1, function(err1, result){
+					
+						var dist = (result.rows[0]).elements[0].distance.text;
+						var time = (result.rows[0]).elements[0].duration.text;
+						
+						session.send("You are about " + dist + ", which is about " + time   
+						+ ", away from %s.", childName);
+						//session.replaceDialog('/navigation');
+						
+						session.endDialog("Do you want to start your navigation?");
+						//session.beginDialog('/navigation');
+						
+						
+					});
+
+
+
+			    })
+			    .catch(function (err) {
+			        console.error(err.message);
+			    });
+
+			/*
 			imgur.upload( gmAPI.staticMap(params) , function (err,res) {
 			  //console.log(res.data.link);
+			    
 				session.send("I found %s", childName);
 				session.send(res.data.link);
 				session.send("Green: Your location\nRed: %s's location", childName);
@@ -232,9 +306,14 @@ bot.add('/getLocation',
 				});
 
 			});
+
+			*/
+
+
+
 		});
 
-
+		
 	}
 );
 
@@ -265,8 +344,8 @@ bot.add('/navigation',
 	    function (session) {
 	        //console.log(results.response);
 	        
-	        	session.send("Starting your navigation");
-
+	        	session.send("Starting your navigation. \nSay next to proceed with next direction.\nSay done whenever you found %s", childName);
+	        	startNavi = true;
 	        	ref.once("value", function(data) {
 	        		var pCord = data.val().pCord;
 					var cCord = data.val().cCord;
@@ -274,21 +353,27 @@ bot.add('/navigation',
 	        		var params = getDire(pCord , cCord);
 	        		gmAPI.directions(params, function(err, result){
 
-						var moves = result.routes[0].legs[0].steps; 
+						directions = result.routes[0].legs[0].steps; 
 		
-						iterateSteps(0, moves.length, moves, session);
-
+						iterateSteps(currNum, directions.length, directions, session);
+						session.endDialog();
 					});
 
 	        	});
 
-
-	        
-	       
- 
-	    }
-	
+	    }	
 );
+
+bot.add('/nextStep', 
+	function (session){
+		//console.log("Moves: " + moves);
+		
+		iterateSteps(currNum, directions.length, directions, session);
+		session.endDialog();
+		
+	}
+);
+
 
 //Firebase
 ref.on("child_changed", function(data){
@@ -300,18 +385,21 @@ ref.on("child_changed", function(data){
 		};
 		bot.beginDialog(address, '/getPicture');
 	}
-	else if (data.key() == "pCord"){
+	else if (data.key() == "pCord" ){
 		var address = {
 			to: userID,
 
 		};
+
 		bot.beginDialog(address, '/getLocation');
 	}
 });
 
 function iterateSteps(current, end, moves, session){
 	if (current == end){
-		session.endDialog("Good luck finding %s!", childName);
+		session.endDialog("You arrived at your destination. End of navigation. Good luck finding %s!", childName);
+		directions = "";
+		currNum = 0; 
 		return;
 	}
 
@@ -330,10 +418,10 @@ function iterateSteps(current, end, moves, session){
 			"Distance: " + step.distance.value + " m"
 		);
 		
-		current = current + 1;
-		
-		//setTimeout(iterateSteps(current, end, moves, session), 2000);
-		iterateSteps(current, end, moves, session);
+		//current = current + 1;
+		currNum = currNum + 1;
+		//session.beginDialog('/nextStep');
+		//iterateSteps(current, end, moves, session);
 		
 		
 	});
@@ -406,7 +494,7 @@ function getMap( parent, child){
 	var params = {
 			  //center: parent,
 			  //zoom: zoomLevel,
-			  size: '600x500',
+			  size: '500x400',
 			  format: 'jpg',
 			  maptype: 'roadmap',
 			  markers: [
