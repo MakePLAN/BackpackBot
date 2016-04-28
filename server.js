@@ -102,6 +102,14 @@ dialog.on('Greeting',
         if (!session.userData.name ){
         	session.beginDialog('/profile');
         	userID = session.message.from;
+        	setInterval(function(){
+				var address = {
+						to: userID,
+
+				};
+
+				bot.beginDialog(address, '/sendNotification');
+			}, 1000 * 60 * 60);  
         	//session.userData.skypeid = session.message.from.address;
         }
         else{
@@ -248,6 +256,7 @@ bot.add('/getLocation',
 			var params1 = getDist(pCord , cCord);
 			needLocation = true;
 			
+			/*
 			imgur1.uploadFile(gmAPI.staticMap(params))
 			    .then(function (json) {
 			        //console.log(json.data.link);
@@ -279,8 +288,9 @@ bot.add('/getLocation',
 			    .catch(function (err) {
 			        console.error(err.message);
 			    });
+			*/
 
-			/*
+			
 			imgur.upload( gmAPI.staticMap(params) , function (err,res) {
 			  //console.log(res.data.link);
 			    
@@ -307,7 +317,7 @@ bot.add('/getLocation',
 
 			});
 
-			*/
+			
 
 
 
@@ -374,6 +384,16 @@ bot.add('/nextStep',
 	}
 );
 
+bot.add('/sendNotification', 
+	function (session){
+		//console.log("Moves: " + moves);
+		session.send("Sorry to bother you but...")
+		session.send("Don't forget about your child!");
+		session.endDialog();
+		
+	}
+);
+
 
 //Firebase
 ref.on("child_changed", function(data){
@@ -394,6 +414,8 @@ ref.on("child_changed", function(data){
 		bot.beginDialog(address, '/getLocation');
 	}
 });
+
+
 
 function iterateSteps(current, end, moves, session){
 	if (current == end){
