@@ -109,7 +109,7 @@ dialog.on('Greeting',
 				};
 
 				bot.beginDialog(address, '/sendNotification');
-			}, 1000 * 60 * 60);  
+			}, 1000 * 60 * 60 * 6);  
         	//session.userData.skypeid = session.message.from.address;
         }
         else{
@@ -516,7 +516,7 @@ function getMap( parent, child){
 	var params = {
 			  //center: parent,
 			  //zoom: zoomLevel,
-			  size: '500x400',
+			  size: '700x600',
 			  format: 'jpg',
 			  maptype: 'roadmap',
 			  markers: [
