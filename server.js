@@ -390,10 +390,9 @@ bot.add('/profile',
 );
 
 bot.add('/navigation', 
-
 	    function (session) {
 	        //console.log(results.response);
-	        
+	        	console.log("Where are you?");
 	        	session.send("Starting your navigation. \nSay next to proceed with next direction.\nSay done whenever you found %s", childName);
 	        	startNavi = true;
 	        	ref.once("value", function(data) {
@@ -505,11 +504,18 @@ bot.add('/reviews',
 			}, 5000);
 
 		  	//session.endDialog("Wake me up if you need anything more! :)");
-			session.send("Oh, btw I found this cool place nearby.");
-			session.send("It's called: " + topBen);
-
-			state = "recommend";
-			session.replaceDialog('/recommend');
+			
+			if (topBen == ""){ //empty
+				state = "";
+				session.endDialog("Wake me up if you need me! :)");
+			}
+			else{
+				session.send("Oh, btw I found this cool place nearby.");
+				session.send("It's called: " + topBen);
+				state = "recommend";
+				session.replaceDialog('/recommend');
+			}
+			
 	    	}
 	    	
 	    }
@@ -563,13 +569,13 @@ ref.on("child_changed", function(data){
 
   	else if (data.key() == "coord"){
   		latlng = data.val();
-	  console.log(latlng);
+	  //console.log(latlng);
 	  URLBuilder = 'https://maps.googleapis.com/maps/api/place/radarsearch/json?location='+latlng+'&radius=1609&type=cafe&key=AIzaSyAhaD4HwgofkA2_9Z7fLbGB1V8Shi-S7do';
-	  console.log(URLBuilder);
+	  //console.log(URLBuilder);
 
 	  HTTPRequest(URLBuilder, function(error, response, body) {
 	    if (!error && response.statusCode == 200) {
-	      console.log(body);
+	      //console.log(body);
 	      obj= JSON.parse(body);
 	      for (i = 0; i<3; i++) {
 	        tempPlaceID = obj.results[i].place_id; //store temporary place ID
@@ -578,10 +584,10 @@ ref.on("child_changed", function(data){
 	          if (!error && response.statusCode==200) {
 	            obj2 = JSON.parse(body2);
 	            //console.log(body2.result.name);
-	            console.log("Result: " + obj2.result.name);
+	            //console.log("Result: " + obj2.result.name);
 
-	            console.log(obj2);
-	            console.log("Reviews: " + obj2.result.reviews[0].aspects[0].rating);
+	            //console.log(obj2);
+	            //console.log("Reviews: " + obj2.result.reviews[0].aspects[0].rating);
 	            if (obj2.result.reviews[0].aspects[0].rating>maxRating){
 	              savedMax = i;
 	              topBen = obj2.result.name;
