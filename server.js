@@ -40,7 +40,9 @@ var savedMax = 0;
 var topLat=0;
 var topLong=0;
 var topBen = "";
+var sagar = false;;
 
+var mapKey = 'AIzaSyD9mI5Hk3MePbrohq2NvTzRZLgf2vr9MQM';
 
 process.env.APP_ID = '2f803c4a-fb46-44ef-b974-742752bf9f3f';
 process.env.APP_SECRET = 'vVi5ZGMUOn6NvJAGXr1DT9s';
@@ -99,7 +101,8 @@ ref.update({
 	"Intent": "None",
 	"Lights": 4,
 	"speaker": -1,
-	"getPicture": 0
+	"getPicture": 0,
+	"coord" : "0,0"
 
 });
 
@@ -246,7 +249,7 @@ bot.add('/gotPicture',
 
 	      //console.log(res.params.best_search);
 	      var search = res.params.best_search.replace(" ","%20");
-	      request('https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + search + '&key=AIzaSyDw48K6CLCSPrmWECi9o0YNE6uPAvM-bP0', function (error, response, body) {
+	      request('https://maps.googleapis.com/maps/api/place/textsearch/json?query=' + search + '&key=' + mapKey, function (error, response, body) {
               if (!error && response.statusCode == 200) {
                 //console.log(body) // Show the HTML for the Google homepage. 
                 var json = JSON.parse(body);
@@ -267,7 +270,7 @@ bot.add('/gotPicture',
                 //session.send("You are at %s!", firstPlace[0].name);
                 placeID = firstPlace[0].place_id;
                 //request = "cll="+cll;
-                URLBuilder = 'https://maps.googleapis.com/maps/api/place/details/json?placeid='+placeID+'&key=AIzaSyDw48K6CLCSPrmWECi9o0YNE6uPAvM-bP0';
+                URLBuilder = 'https://maps.googleapis.com/maps/api/place/details/json?placeid='+placeID+'&key=' + mapKey;
 
                 request(URLBuilder, function(error, response, body) {
                   if (!error && response.statusCode == 200) {
@@ -280,9 +283,9 @@ bot.add('/gotPicture',
 							//console.log(JSON.stringify(data.val() ));
 							
 							var array;
-
+							sagar = false;
 							console.log(firstPlace[0].name);
-							if (firstPlace[0].name == "Los Angeles County Museum of Art"){
+							if (firstPlace[0].name == "Los Angeles County Museum of Art" || "Urban Lights" == firstPlace[0].name){
 								
 								array = data1.val().LACMA;
 								placeName = "LACMA";
@@ -299,49 +302,56 @@ bot.add('/gotPicture',
 								placeName = "BHH";
 								array = data1.val().BHH;
 							}
+							else{
+								sagar = true;
+								session.endDialog("Picture wasn't matched!");
+							}
 							
 							//console.log(obj.result.reviews[0]);
-							session.send("Here are some google reviews:");
-							if (obj.result.reviews[0].text.length > 200){
-								session.send("1. Rate: " + obj.result.reviews[0].aspects[0].rating + "\n" + obj.result.reviews[0].text.substring(0, 200) + "...");
-							}
-							else{
-								session.send("1. Rate: " + obj.result.reviews[0].aspects[0].rating + "\n" + obj.result.reviews[0].text);
-							}
+							if (sagar == false){
+								session.send("Here are some google reviews:");
+								if (obj.result.reviews[0].text.length > 200){
+									session.send("1. Rate: " + obj.result.reviews[0].aspects[0].rating + "\n" + obj.result.reviews[0].text.substring(0, 200) + "...");
+								}
+								else{
+									session.send("1. Rate: " + obj.result.reviews[0].aspects[0].rating + "\n" + obj.result.reviews[0].text);
+								}
 
-							if (obj.result.reviews[1].text.length > 200){
-								session.send("2. Rate: " + obj.result.reviews[1].aspects[0].rating + "\n" + obj.result.reviews[1].text.substring(0, 200) + "...");
-							}
-							else{
-								session.send("2. Rate: " + obj.result.reviews[1].aspects[0].rating + "\n" + obj.result.reviews[1].text);
-							}
+								if (obj.result.reviews[1].text.length > 200){
+									session.send("2. Rate: " + obj.result.reviews[1].aspects[0].rating + "\n" + obj.result.reviews[1].text.substring(0, 200) + "...");
+								}
+								else{
+									session.send("2. Rate: " + obj.result.reviews[1].aspects[0].rating + "\n" + obj.result.reviews[1].text);
+								}
 
-							
-							var arr = [];
-							
+								
+								var arr = [];
+								
 
-							for(var x in array){
-						  		arr.push(x);
-						  		
-							}
-							session.send("Here are some crowd sourced reviews:");
-							var count = 1;
-							for (var i = arr.length - 1; i > arr.length - 3; i--){
-								//console.log(array[ arr[i] ] );
-								session.send(count + ". Rate: " + array[ arr[i] ].rate  + "\n" + array[ arr[i] ].note );
-								count += 1;
-							}
-							
-							
-							setTimeout(function(){
-								//session.endDialog();
-								//session.beginDialog('/reviews');
-								ref.update({
-						    	"Lights": 3
+								for(var x in array){
+							  		arr.push(x);
+							  		
+								}
+								session.send("Here are some crowd sourced reviews:");
+								var count = 1;
+								for (var i = arr.length - 1; i > arr.length - 3; i--){
+									//console.log(array[ arr[i] ] );
+									session.send(count + ". Rate: " + array[ arr[i] ].rate  + "\n" + array[ arr[i] ].note );
+									count += 1;
+								}
+								
+								
+								setTimeout(function(){
+									//session.endDialog();
+									//session.beginDialog('/reviews');
+									ref.update({
+							    	"Lights": 3
 
-								});
-								session.replaceDialog('/askingReview');
-							}, 18000);	
+									});
+									session.replaceDialog('/askingReview');
+								}, 15000);	
+							}
+							
 							
 
 
@@ -392,8 +402,8 @@ bot.add('/profile',
 bot.add('/navigation', 
 	    function (session) {
 	        //console.log(results.response);
-	        	console.log("Where are you?");
-	        	session.send("Starting your navigation. \nSay next to proceed with next direction.\nSay done whenever you found %s", childName);
+	        	console.log("Where are you?"+topLat );
+	        	session.send("Starting your navigation. \nSay next to proceed with next direction.\nSay done whenever you find the place.");
 	        	startNavi = true;
 	        	ref.once("value", function(data) {
 	        		var curr = data.val().coord;
@@ -567,10 +577,11 @@ ref.on("child_changed", function(data){
      
   	}
 
-  	else if (data.key() == "coord"){
+  	else if (data.key() == "coord" && !sagar){
+
   		latlng = data.val();
 	  //console.log(latlng);
-	  URLBuilder = 'https://maps.googleapis.com/maps/api/place/radarsearch/json?location='+latlng+'&radius=1609&type=cafe&key=AIzaSyAhaD4HwgofkA2_9Z7fLbGB1V8Shi-S7do';
+	  URLBuilder = 'https://maps.googleapis.com/maps/api/place/radarsearch/json?location='+latlng+'&radius=1609&type=cafe&key=' + mapKey;
 	  //console.log(URLBuilder);
 
 	  HTTPRequest(URLBuilder, function(error, response, body) {
@@ -579,19 +590,24 @@ ref.on("child_changed", function(data){
 	      obj= JSON.parse(body);
 	      for (i = 0; i<3; i++) {
 	        tempPlaceID = obj.results[i].place_id; //store temporary place ID
-	        URLBuilder2 = 'https://maps.googleapis.com/maps/api/place/details/json?placeid='+tempPlaceID+'&key=AIzaSyAhaD4HwgofkA2_9Z7fLbGB1V8Shi-S7do'
+	        URLBuilder2 = 'https://maps.googleapis.com/maps/api/place/details/json?placeid='+tempPlaceID+'&key=' + mapKey
 	        HTTPRequest2(URLBuilder2, function(error, response, body2) {
 	          if (!error && response.statusCode==200) {
 	            obj2 = JSON.parse(body2);
+	            //console.log(obj2);
 	            //console.log(body2.result.name);
 	            //console.log("Result: " + obj2.result.name);
 
 	            //console.log(obj2);
 	            //console.log("Reviews: " + obj2.result.reviews[0].aspects[0].rating);
+
 	            if (obj2.result.reviews[0].aspects[0].rating>maxRating){
 	              savedMax = i;
 	              topBen = obj2.result.name;
 	            }
+	          }
+	          else {
+	          	console.log(error);
 	          }
 	        });
 
@@ -610,7 +626,7 @@ ref.on("child_changed", function(data){
 
 function iterateSteps(current, end, moves, session){
 	if (current == end){
-		session.endDialog("You arrived at your destination. End of navigation. Good luck finding %s!", childName);
+		session.endDialog("You arrived at your destination. Enjoy! Catch you later! :)");
 		directions = "";
 		currNum = 0; 
 		return;
@@ -777,7 +793,7 @@ server.use(restify.bodyParser());
 server.post('/v1/chat',skype.messagingHandler(botService));
 
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8082;
 server.listen(port);
 console.log('Listening for incoming requests on port ' + port); 
 
