@@ -1,6 +1,5 @@
 const Firebase = require("firebase");
 const fs = require('fs');
-const LineByLineReader = require('line-by-line');
 const restify = require('restify');
 const skype = require('skype-sdk');
 const HashMap = require('hashmap');
@@ -120,9 +119,7 @@ dialog.on('Greeting',
         	setInterval(function(){
 				var address = {
 						to: userID,
-
 				};
-
 				bot.beginDialog(address, '/sendNotification');
 			}, 1000 * 60 * 60 * 6);  
         	*/
@@ -796,5 +793,3 @@ server.post('/v1/chat',skype.messagingHandler(botService));
 const port = process.env.PORT || 8082;
 server.listen(port);
 console.log('Listening for incoming requests on port ' + port); 
-
-
